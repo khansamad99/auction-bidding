@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { connectSocket, getSocket, disconnectSocket } from '@/lib/socket';
 import { formatCurrency } from '@/lib/utils';
+import { api } from '@/lib/api';
 import { Auction, Bid } from '@/types';
 import toast from 'react-hot-toast';
 import { 
@@ -99,7 +100,7 @@ export default function RealTimeBidding({
 
   // WebSocket connection and event handlers
   useEffect(() => {
-    if (token && auction.status === 'ACTIVE') {
+    if (token) {
       const socket = connectSocket(token);
       
       socket.on('connect', () => {
@@ -216,20 +217,26 @@ export default function RealTimeBidding({
 
     try {
       const socket = getSocket();
+      // Try WebSocket first, fallback to HTTP API
       if (socket && isConnected) {
         socket.emit('placeBid', {
           auctionId: auction._id,
           bidAmount: amount
         });
-        
-        setBidAmount('');
-        toast.success('Bid submitted! Processing...', {
-          icon: '⏳',
-          duration: 2000,
-        });
       } else {
-        throw new Error('Not connected to auction');
+        // Fallback to HTTP API if WebSocket not available
+        await api.post('/bids', {
+          auctionId: auction._id,
+          bidAmount: amount,
+          userId: user?._id
+        });
       }
+      
+      setBidAmount('');
+      toast.success('Bid submitted! Processing...', {
+        icon: '⏳',
+        duration: 2000,
+      });
     } catch (error: any) {
       toast.error(error.message || 'Failed to place bid');
     } finally {
@@ -239,7 +246,8 @@ export default function RealTimeBidding({
 
   const getConnectionStatus = () => {
     if (!user) return { color: 'gray', text: 'Not logged in' };
-    if (!isConnected) return { color: 'red', text: 'Disconnected' };
+    if (!token) return { color: 'gray', text: 'No token' };
+    if (!isConnected) return { color: 'yellow', text: 'Connecting...' };
     return { color: 'green', text: 'Live' };
   };
 
@@ -375,7 +383,7 @@ export default function RealTimeBidding({
 
             <button
               type="submit"
-              disabled={placing || !isConnected}
+              disabled={placing || !isAuctionActive || !user}
               className="w-full px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {placing ? (

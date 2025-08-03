@@ -240,7 +240,7 @@ export default function ProfilePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-2">
                             <h4 className="text-lg font-medium text-gray-900 truncate">
-                              Auction #{bid.auctionId.slice(-6)}
+                              Auction #{typeof bid.auctionId === 'string' ? bid.auctionId.slice(-6) : bid.auctionId._id?.slice(-6) || 'Unknown'}
                             </h4>
                             {bid.isWinning && (
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
