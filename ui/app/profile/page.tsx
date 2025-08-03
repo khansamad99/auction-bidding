@@ -47,23 +47,28 @@ export default function ProfilePage() {
   }, [user]);
 
   const fetchUserData = async () => {
+    if (!user?._id) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const [bidsResponse, auctionsResponse] = await Promise.all([
-        api.get(`/bids/user/${user?._id}`),
-        api.get(`/auctions?userId=${user?._id}`)
+        api.get(`/bids/user/${user._id}`),
+        api.get(`/auctions?userId=${user._id}`)
       ]);
 
-      const bids = bidsResponse.data;
-      const auctions = auctionsResponse.data;
+      const bids = Array.isArray(bidsResponse.data) ? bidsResponse.data : [];
+      const auctions = Array.isArray(auctionsResponse.data) ? auctionsResponse.data : [];
 
       setUserBids(bids);
       setUserAuctions(auctions);
 
-      // Calculate stats
-      const wonAuctions = bids.filter((bid: Bid) => bid.isWinning).length;
+      // Calculate stats with null checks
+      const wonAuctions = bids.filter((bid: Bid) => bid && bid.isWinning).length;
       const totalSpent = bids
-        .filter((bid: Bid) => bid.isWinning)
-        .reduce((sum: number, bid: Bid) => sum + bid.bidAmount, 0);
+        .filter((bid: Bid) => bid && bid.isWinning && bid.bidAmount)
+        .reduce((sum: number, bid: Bid) => sum + (bid.bidAmount || 0), 0);
 
       setStats({
         totalBids: bids.length,
@@ -74,6 +79,15 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       toast.error('Failed to load profile data');
+      // Set empty data on error
+      setUserBids([]);
+      setUserAuctions([]);
+      setStats({
+        totalBids: 0,
+        totalAuctions: 0,
+        wonAuctions: 0,
+        totalSpent: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -229,7 +243,7 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  userBids.map((bid) => (
+                  userBids.filter(bid => bid && bid._id).map((bid) => (
                     <div
                       key={bid._id}
                       className={`border rounded-lg p-4 ${
@@ -240,7 +254,7 @@ export default function ProfilePage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-2">
                             <h4 className="text-lg font-medium text-gray-900 truncate">
-                              Auction #{typeof bid.auctionId === 'string' ? bid.auctionId.slice(-6) : bid.auctionId._id?.slice(-6) || 'Unknown'}
+                              Auction #{bid.auctionId ? (typeof bid.auctionId === 'string' ? bid.auctionId.slice(-6) : bid.auctionId._id?.slice(-6) || 'Unknown') : 'Unknown'}
                             </h4>
                             {bid.isWinning && (
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -252,22 +266,24 @@ export default function ProfilePage() {
                           <div className="flex items-center space-x-4 text-sm text-gray-500">
                             <span className="flex items-center">
                               <Clock className="w-4 h-4 mr-1" />
-                              {formatDate(bid.timestamp)}
+                              {bid.timestamp ? formatDate(bid.timestamp) : 'No date'}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
                             <p className="text-xl font-bold text-gray-900">
-                              {formatCurrency(bid.bidAmount)}
+                              {bid.bidAmount ? formatCurrency(bid.bidAmount) : '$0'}
                             </p>
                           </div>
-                          <Link
-                            href={`/auction/${bid.auctionId}`}
-                            className="inline-flex items-center text-blue-600 hover:text-blue-800"
-                          >
-                            <ArrowUpRight className="w-4 h-4" />
-                          </Link>
+                          {bid.auctionId && (
+                            <Link
+                              href={`/auction/${typeof bid.auctionId === 'string' ? bid.auctionId : bid.auctionId._id}`}
+                              className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                            >
+                              <ArrowUpRight className="w-4 h-4" />
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>

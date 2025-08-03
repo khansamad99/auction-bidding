@@ -51,9 +51,19 @@ export default function RealTimeBidding({
         if (auction.status === 'PENDING') {
           const diffToStart = start - now;
           if (diffToStart <= 0) {
-            setTimeLeft('Starting...');
-            // Refresh the auction data to check if it's now active
-            window.location.reload();
+            // Start time has passed - this auction should be active
+            setTimeLeft('Should be ACTIVE');
+            
+            // Try to start the auction automatically
+            const startAuction = async () => {
+              try {
+                await api.post(`/auctions/${auction._id}/start`);
+                window.location.reload();
+              } catch (error) {
+                console.error('Failed to start auction:', error);
+              }
+            };
+            startAuction();
           } else {
             const days = Math.floor(diffToStart / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diffToStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -321,6 +331,29 @@ export default function RealTimeBidding({
           </div>
         </div>
       </div>
+
+      {/* Debug: Start Auction if needed */}
+      {auction.status === 'PENDING' && new Date(auction.startTime) <= new Date() && user && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+          <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-yellow-900 mb-2">Auction Ready to Start</h3>
+          <p className="text-yellow-700 mb-4">This auction's start time has passed. Click below to start it.</p>
+          <button
+            onClick={async () => {
+              try {
+                await api.post(`/auctions/${auction._id}/start`);
+                toast.success('Auction started!');
+                window.location.reload();
+              } catch (error: any) {
+                toast.error(error.response?.data?.message || 'Failed to start auction');
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          >
+            Start Auction Now
+          </button>
+        </div>
+      )}
 
       {/* Bidding Form */}
       {isAuctionActive && user && (

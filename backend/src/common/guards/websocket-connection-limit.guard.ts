@@ -12,10 +12,10 @@ export interface ConnectionLimitOptions {
 export class WebSocketConnectionLimitService {
   private readonly logger = new Logger(WebSocketConnectionLimitService.name);
   private readonly defaultOptions: ConnectionLimitOptions = {
-    maxConnectionsPerIP: 5,
-    maxConnectionsPerUser: 3,
+    maxConnectionsPerIP: 20, // Increased for development
+    maxConnectionsPerUser: 10, // Increased for development
     windowMs: 60 * 1000, // 1 minute
-    blockDuration: 5 * 60 * 1000, // 5 minutes
+    blockDuration: 30 * 1000, // 30 seconds (reduced for development)
   };
 
   constructor(private readonly redisService: RedisService) {}

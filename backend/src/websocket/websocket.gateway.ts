@@ -150,7 +150,9 @@ export class WebsocketGateway
       }
 
       socket.join(`auction:${auctionId}`);
-      this.logger.log(`User ${socket.data.user.username} joined auction ${auctionId}`);
+      
+      const username = socket.data.user?.username || 'Anonymous';
+      this.logger.log(`User ${username} joined auction ${auctionId}`);
 
       // Subscribe to auction-specific bid updates if not already subscribed
       if (!socket.data.subscribedAuctions) {
@@ -192,10 +194,12 @@ export class WebsocketGateway
       });
 
       // Notify other users
-      socket.to(`auction:${auctionId}`).emit(WebSocketEvents.USER_JOINED, {
-        userId: socket.data.user._id,
-        username: socket.data.user.username,
-      });
+      if (socket.data.user) {
+        socket.to(`auction:${auctionId}`).emit(WebSocketEvents.USER_JOINED, {
+          userId: socket.data.user._id,
+          username: socket.data.user.username,
+        });
+      }
     } catch (error) {
       this.logger.error('Join auction error:', error.message);
       socket.emit('error', { message: error.message });
@@ -207,14 +211,23 @@ export class WebsocketGateway
     @MessageBody() auctionId: string,
     @ConnectedSocket() socket: Socket,
   ) {
-    socket.leave(`auction:${auctionId}`);
-    this.logger.log(`User ${socket.data.user.username} left auction ${auctionId}`);
-
-    // Notify other users
-    socket.to(`auction:${auctionId}`).emit(WebSocketEvents.USER_LEFT, {
-      userId: socket.data.user._id,
-      username: socket.data.user.username,
-    });
+    try {
+      socket.leave(`auction:${auctionId}`);
+      
+      if (socket.data.user) {
+        this.logger.log(`User ${socket.data.user.username} left auction ${auctionId}`);
+        
+        // Notify other users
+        socket.to(`auction:${auctionId}`).emit(WebSocketEvents.USER_LEFT, {
+          userId: socket.data.user._id,
+          username: socket.data.user.username,
+        });
+      } else {
+        this.logger.log(`Anonymous user left auction ${auctionId}`);
+      }
+    } catch (error) {
+      this.logger.error('Leave auction error:', error.message);
+    }
   }
 
   @SubscribeMessage(WebSocketEvents.PLACE_BID)
