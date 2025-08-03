@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: royal-class-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: royal-class-auctions
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - royal-class-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: royal-class-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - royal-class-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: royal-class-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - royal-class-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  royal-class-network:
+    driver: bridge
