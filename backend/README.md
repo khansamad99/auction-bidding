@@ -31,7 +31,6 @@ A high-performance, real-time bidding system built with NestJS, MongoDB, Redis, 
 - **WebSocket**: Socket.IO for real-time communication
 - **Authentication**: JWT with Passport strategies
 - **Validation**: Class-validator and class-transformer
-- **Testing**: Jest for unit and integration tests
 
 ## 📋 Prerequisites
 
@@ -152,21 +151,6 @@ GET    /api/users/:id # Get specific user
 DELETE /api/users/:id # Delete user
 ```
 
-## 🧪 Testing
-
-```bash
-# Unit tests
-npm run test
-
-# End-to-end tests
-npm run test:e2e
-
-# Test coverage
-npm run test:cov
-
-# Watch mode
-npm run test:watch
-```
 
 ## 🗄 Database Schema
 
@@ -289,15 +273,15 @@ npm run start:prod
 - Configure RabbitMQ clustering for reliability
 - Use reverse proxy (nginx) for load balancing
 
-## 🤝 API Testing
+## 🤝 API Usage
 
-Use the provided `test-api.http` file with REST Client extension in VS Code:
+You can test the API endpoints with any HTTP client:
 
-1. Register a new user
-2. Login to get JWT token
-3. Create auctions
-4. Place bids
-5. Test real-time WebSocket events
+1. Register a new user via `/api/auth/register`
+2. Login to get JWT token via `/api/auth/login`
+3. Create auctions via `/api/auctions`
+4. Place bids via `/api/bids`
+5. Connect to WebSocket for real-time events
 
 ## 📝 Logging & Monitoring
 
