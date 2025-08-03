@@ -166,7 +166,7 @@ export default function AuctionDetailPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">
-                            {bid.user?.username || 'Anonymous'}
+                            {bid?.userId?.username || 'Anonymous'}
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(bid.timestamp).toLocaleTimeString()}
